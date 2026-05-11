@@ -1,12 +1,988 @@
 <!DOCTYPE html>
+<!-- DOCTYPE tells the browser this is a modern HTML5 document -->
 <html lang="en">
+<!-- lang="en" helps screen readers and search engines know the page language -->
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Personal Page</title>
+  <!-- Everything in <head> is metadata — it configures the page but isn't visible content -->
+
+  <meta charset="UTF-8">
+  <!-- UTF-8 means the page can display any character, including accented letters and emoji -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- This makes the page scale correctly on phones. Without it, mobile browsers zoom out and show a tiny desktop view -->
+
+<link rel="icon" href="favicon-light.png" media="(prefers-color-scheme: light)">
+<link rel="icon" href="favicon-dark.png" media="(prefers-color-scheme: dark)">
+
+  <title>Aryeh R</title>
+  <!-- Text shown in the browser tab and in Google search results -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <!-- Tells the browser to open a connection to Google Fonts early, so the font loads faster -->
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Loads the Inter font from Google in five weights (400=normal, 500=medium, 600=semibold, 700=bold, 800=extrabold) -->
+
+  <!-- D3: data visualization library used for the globe projection, rendering, and drag interaction -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <!-- TopoJSON: decodes compressed country border geometry from the world-atlas dataset -->
+  <script src="https://cdn.jsdelivr.net/npm/topojson@3"></script>
+
+  <style>
+    /* Everything inside <style> is CSS — it controls how elements look */
+
+    /* ============================================================
+       COLOR PALETTE
+       CSS variables (--name: value) let us define colors once here
+       and reuse them everywhere with var(--name).
+       To change the whole color scheme, you only need to edit this block.
+    ============================================================ */
+    :root {
+      --bg:           #f4f6f0;  /* main page background — sage white */
+      --bg-alt:       #c5ccb0;  /* alternate section background — lichen green, used for About and Currently Into */
+      --text:         #1e2914;  /* main text color — deep forest green */
+      --text-muted:   #4a5c38;  /* secondary text — lighter green for taglines, descriptions */
+      --accent:       #4a6741;  /* highlight color — moss green, used for buttons, links, labels */
+      --accent-hover: #3a5232;  /* darker accent for hover states */
+      --white:        #ffffff;  /* pure white, used for card backgrounds */
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /*
+      box-sizing: border-box means padding and borders are included in an element's width/height,
+      which makes layout math much more predictable.
+      margin: 0 and padding: 0 remove the browser's default spacing so we start from a clean slate.
+      The * selector applies this to every single element on the page.
+    */
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      /* Use Inter if it loaded; fall back to the OS system font, then any sans-serif */
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      /* line-height: 1.6 means each line is 1.6× the font size tall — makes text more readable */
+    }
+
+    /* ============================================================
+       NAVIGATION
+       The nav sticks to the top of the screen as you scroll.
+       The outer <nav> handles the sticky behavior and full-width border.
+       The inner .nav-inner constrains the content to 700px so it
+       aligns with the rest of the page.
+    ============================================================ */
+    nav {
+      position: sticky; /* stays at the top of the viewport when you scroll past it */
+      top: 0;           /* "stick" exactly at the top edge */
+      background: var(--bg);
+      border-bottom: 1px solid var(--bg-alt); /* subtle dividing line below the nav */
+      z-index: 100;     /* ensures the nav renders on top of other content when overlapping */
+    }
+
+    nav .nav-inner {
+      max-width: 700px;        /* same width as the rest of the page content */
+      margin: 0 0 0 auto;      /* pushes the nav block to the right edge */
+      padding: 16px 48px;
+      display: flex;           /* flex puts children side by side */
+      justify-content: flex-end; /* aligns all items to the right */
+      gap: 48px;                 /* space between the logo and the nav links */
+      align-items: center;     /* vertically centers logo and links */
+    }
+
+    nav .logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text);
+      text-decoration: none;   /* removes the default underline from links */
+    }
+
+    nav ul {
+      list-style: none;  /* removes the default bullet points from the list */
+      display: flex;     /* puts the nav items in a row */
+      gap: 32px;         /* space between each nav item */
+    }
+
+    nav ul a {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s; /* smoothly animates the color change on hover over 0.2 seconds */
+    }
+
+    nav ul a:hover { color: var(--accent); }
+    /* :hover applies only when the mouse is over the element */
+
+    /* ============================================================
+       SHARED UTILITIES
+       These classes are reused across multiple sections.
+    ============================================================ */
+
+    .section-inner {
+      max-width: 800px;  /* all content columns are the same width */
+      margin: 0 auto;    /* centers the column on the page */
+      padding: 80px 32px;
+      /* 80px top/bottom breathing room, 32px left/right so content doesn't touch the edge */
+    }
+
+    .section-label {
+      /* The small all-caps label above each section heading (e.g. "ABOUT", "RESEARCH & PROJECTS") */
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em; /* spreads letters apart for the all-caps look */
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      /* Solid filled button */
+      display: inline-block; /* allows padding on an anchor tag, which is normally inline */
+      padding: 12px 24px;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;    /* slightly rounded corners */
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: var(--accent-hover); }
+
+    .btn-outline {
+      /* Ghost/outline button — extends .btn but overrides background and border */
+      background: transparent;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      margin-left: 12px;
+    }
+
+    .btn-outline:hover { background: var(--accent); color: white; }
+
+    /* ============================================================
+       HERO SECTION
+       The first thing visitors see. Large name, tagline, intro text.
+    ============================================================ */
+    #hero .section-inner {
+      padding-top: 100px;
+      padding-bottom: 100px;
+      text-align: center; /* centers all text and inline elements in the hero */
+    }
+
+    #hero .intro {
+      margin-left: auto;
+      margin-right: auto;
+      /* auto left/right margins center a block element that has a max-width */
+    }
+
+    #hero .eyebrow {
+      /* Small text above the name — "Case Western Reserve University" */
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    #hero h1 {
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      /*
+        clamp(min, preferred, max) makes the font responsive:
+        - never smaller than 2.8rem
+        - ideally 6% of the viewport width (scales with screen size)
+        - never larger than 5rem
+      */
+      font-weight: 800;
+      line-height: 1.05; /* tight line spacing for large display text */
+      margin-bottom: 16px;
+    }
+
+    #hero .tagline {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+
+    #hero .intro {
+      font-size: 1rem;
+      max-width: 580px;  /* slightly narrower than the column so it doesn't feel too wide to read */
+      margin-bottom: 36px;
+    }
+
+    /* ============================================================
+       ABOUT SECTION
+       Uses var(--bg-alt) as background to visually separate it
+       from the hero and projects sections.
+    ============================================================ */
+    #about {
+      background: var(--bg-alt);
+      /* The section itself is full-width; .section-inner inside constrains the text */
+    }
+
+    #about h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+    }
+
+    #about p {
+      max-width: 680px;
+      margin-bottom: 14px;
+      font-size: 1rem;
+    }
+
+    #about p:last-child { margin-bottom: 0; }
+    /* removes the bottom margin from the last paragraph so there's no extra space */
+
+    /* ============================================================
+       PROJECTS SECTION
+       A vertical stack of cards, one per project/research item.
+    ============================================================ */
+    #projects h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    #projects .section-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 40px;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column; /* stacks cards vertically (one per row) */
+      gap: 16px;              /* space between cards */
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 24px;
+      border: 1px solid var(--bg-alt);
+      display: flex;
+      flex-direction: column; /* stacks the tag, title, description, and links vertically */
+      gap: 10px;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.09);
+      /* rgba(0,0,0,0.09) = black at 9% opacity — a subtle shadow */
+      transform: translateY(-2px);
+      /* moves the card 2px upward on hover, giving a "lift" effect */
+    }
+
+    .card-tag {
+      /* Small pill label: "Research", "Project", or "Creative" */
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: #dde5d4;   /* light mossy green background */
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      width: fit-content;    /* shrinks to fit the text instead of stretching full width */
+    }
+
+    .badge-review {
+      /* Yellow "Under Review" badge — only on the ECCV paper card */
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: #fef3c7;  /* light yellow */
+      color: #92400e;       /* dark amber text */
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      flex: 1;
+      /* flex: 1 makes the description expand to fill available space,
+         which keeps card links aligned at the bottom across cards */
+    }
+
+    .card-links {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap; /* if links don't fit on one line, they wrap to the next */
+      margin-top: 4px;
+    }
+
+    .card-link {
+      /* Text link with an underline — used for arXiv, GitHub, etc. */
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid var(--accent); /* manual underline so we control its style */
+      padding-bottom: 1px;
+      transition: opacity 0.2s;
+    }
+
+    .card-link:hover { opacity: 0.65; }
+
+     /* ============================================================
+       PHOTO STRIP
+       Full-width horizontal scrollable gallery between Interests and footer.
+       Replace each src with your own image paths or URLs.
+    ============================================================ */
+    .photo-strip-section {
+      padding: 10px 0;
+      background: var(--text);
+    }
+
+    .photo-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 0 40px;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch; /* smooth momentum scroll on iOS */
+      scrollbar-width: thin;
+      scrollbar-color: var(--text-muted) transparent;
+    }
+
+    .photo-strip::-webkit-scrollbar { height: 6px; }
+    .photo-strip::-webkit-scrollbar-track { background: transparent; }
+    .photo-strip::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+
+    .photo-item {
+      flex-shrink: 0; /* prevents photos from shrinking to fit — they stay their fixed size */
+      width: 280px;
+      height: 200px;
+      background: var(--bg-alt);
+    }
+
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* crops to fill the box without stretching */
+      display: block;
+    }
+
+    /* ============================================================
+       INTERESTS SECTION
+       Alternating background like About. Contains the YouTube embed and globe.
+    ============================================================ */
+    #currently {
+      background: var(--bg-alt);
+    }
+
+    /* Widen this section only so globe + video fit side by side */
+    #currently .section-inner {
+      max-width: 1100px;
+      padding-top: 32px;
+      padding-bottom: 32px;
+    }
+
+    #currently h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    #currently .section-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    /* Two-column layout: fixed globe column on left, video fills the rest */
+    .currently-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 140px;
+      align-items: center;
+    }
+
+    #globe-wrap svg {
+      display: block; /* removes inline spacing below the SVG */
+      border-radius: 50%; /* clips the SVG to a circle so the ocean edge looks clean */
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      /* border: 3px solid #b89b66; */
+      /* background: #4a5c38; */
+    }
+
+    .video-wrap {
+      /* aspect-ratio is the modern way to do responsive 16:9 video —
+         unlike the old padding-bottom hack, it gives the element a real height
+         so the grid can align it correctly */
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 10px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    }
+
+    .video-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* ============================================================
+       LYRICS TICKER
+       A thin full-width bar that scrolls lyrics like a bus display.
+       The badge on the left shows the song + artist (static).
+       The text is written twice inside .ticker-inner so the scroll
+       loops seamlessly — the animation moves exactly -50%, which
+       brings the second copy into view exactly as the first exits.
+
+       TO UPDATE: change the text inside .ticker-inner (edit both copies
+       to match), and update .ticker-song and .ticker-artist.
+    ============================================================ */
+    .lyrics-ticker {
+      display: flex;
+      align-items: stretch;
+      height: 60px;
+      background: var(--text); /* dark bar for contrast — like a real LED display */
+      border-top: 3px solid var(--accent-hover);
+      overflow: hidden;
+    }
+
+    .ticker-badge {
+      flex-shrink: 0;
+      padding: 0 18px;
+      border-right: 2px solid rgba(255,255,255,0.12);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .ticker-song {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .ticker-artist {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.5);
+      white-space: nowrap;
+    }
+
+    .ticker-wrap {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    .ticker-inner {
+      white-space: nowrap;
+      font-size: 1.1rem;
+      /* font-style: italic; */
+      color: rgba(255,255,255,0.82);
+      letter-spacing: 0.02em;
+      animation: ticker-scroll 35s linear infinite;
+      animation-play-state: paused; /* still by default */
+      padding-left: 8px;
+    }
+
+    @keyframes ticker-scroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); } /* -50% moves exactly one copy of the text off-screen */
+    }
+
+    .ticker-toggle {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.6rem;
+      padding: 0 12px 0 10px;
+      align-self: center;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+
+    .ticker-toggle:hover { color: rgba(255,255,255,0.9); }
+
+    /* ============================================================
+       FOOTER / CONTACT
+       Simple footer with your name on the left and links on the right.
+    ============================================================ */
+
+    footer {
+      border-top: 2px solid var(--bg-alt);
+    }
+
+    footer .section-inner {
+      padding-top: 50px;
+      padding-bottom: 50px;
+      display: flex;
+      justify-content: space-between; /* name on left, links on right */
+      align-items: center;
+      flex-wrap: wrap; /* on small screens, links drop below the name instead of overflowing */
+      gap: 20px;
+    }
+
+    .footer-name {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .footer-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .contact-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .contact-links a {
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      transition: opacity 0.2s;
+    }
+
+    .contact-links a:hover { opacity: 0.65; }
+
+    .email-copy {
+      /* Reset browser button styles so it looks like the other contact links */
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      transition: opacity 0.2s;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .email-copy:hover { opacity: 0.65; }
+
+    /* ============================================================
+       RESPONSIVE — MOBILE ADJUSTMENTS
+       @media applies these rules only when the screen is 640px wide or less.
+       This shrinks padding so content doesn't feel cramped on phones.
+    ============================================================ */
+    @media (max-width: 640px) {
+      nav .nav-inner { padding: 16px 20px; }
+      nav ul { gap: 16px; }
+      .section-inner { padding: 60px 20px; }
+      #hero .section-inner { padding-top: 60px; padding-bottom: 60px; }
+      .btn-outline { margin-left: 0; margin-top: 10px; }
+      .currently-grid { grid-template-columns: 1fr; } /* stack vertically on mobile */
+    }
+  </style>
 </head>
+
 <body>
-    <h1>Hola, soy Aryeh!</h1>
-    <p>Bienvenidos/as a mi pagina personal. Aquí mostraré mis proyectos y investigaciones actuales, y cualquier cosa que me parece interesentate compartir.</p>
+
+  <!-- ============================================================
+       NAVIGATION
+       Sticks to the top as you scroll. Logo on the left links back
+       to the top of the page (#). Links on the right jump to each
+       section using their id (e.g. href="#about" scrolls to <section id="about">).
+  ============================================================ -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="logo">Aryeh</a>
+      <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#currently">Interests</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       HERO
+       The landing view. Eyebrow → name → tagline → intro text.
+       The two buttons are commented out for now — remove the
+       comment markers to bring them back.
+  ============================================================ -->
+  <section id="hero">
+    <div class="section-inner">
+      <div class="eyebrow">Case Western Reserve University</div>
+      <h1>Aryeh<br>Rothenberg Bistre</h1>
+      <div class="tagline">Mechanical Engineer · ML Researcher · Explorador</div>
+      <p class="intro">Third-year ME student at Case Western Reserve, researching machine learning and robotics — and looking for every opportunity to connect, build, and explore.</p>
+      <!-- Buttons are hidden for now. To show them, delete the comment markers around each line: -->
+      <!-- <a href="#projects" class="btn">View My Work</a> -->
+      <!-- <a href="#contact" class="btn btn-outline">Get in Touch</a> -->
+    </div>
+  </section>
+
+  <!-- ============================================================
+       ABOUT
+       Two short paragraphs: research focus + personal identity.
+       Sits on the darker --bg-alt background to visually separate
+       it from the hero above and projects below.
+  ============================================================ -->
+  <section id="about">
+    <div class="section-inner">
+      <div class="section-label">About</div>
+      <h2>Acerca de mi</h2>
+      <p>I'm a third-year mechanical engineering student at Case Western Reserve University with a passion for machine learning and robotics. My research sits at the intersection of computer vision and autonomous systems, and I'm currently looking to pursue a PhD to push that work further.</p>
+      <p>In everything I do, I'm an explorer at heart — I find meaning in connecting with people, experiencing new cultures, and striving to be an active source of light in the world.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PROJECTS
+       A vertical stack of cards. Each card has:
+         - .card-tag: category label (Research / Project / Creative)
+         - .badge-review: only on the paper, shows "Under Review · ECCV"
+         - h3: project title
+         - p: short description
+         - .card-links: one or more text links (arXiv, GitHub, etc.)
+       To add a new project, copy one full <div class="card">...</div>
+       block and paste it inside .cards.
+  ============================================================ -->
+  <section id="projects">
+    <div class="section-inner">
+      <div class="section-label">Research & Projects</div>
+      <h2>Where my energy goes</h2>
+      <p class="section-desc">A mix of research, personal projects, and creative work.</p>
+      <div class="cards">
+
+        <div class="card">
+          <span class="card-tag">Research</span>
+          <span class="badge-review">Under Review · ECCV</span>
+          <h3>TrianguLang: Geometry-Aware Semantic Consensus for Pose-Free 3D Localization</h3>
+          <p>Real-time object segmentation and 3D localization using pose-free images and simple text guiding. Currently under review at the European Conference on Computer Vision.</p>
+          <div class="card-links">
+            <!-- Replace # with your actual arXiv and GitHub URLs when ready -->
+            <a href="https://arxiv.org/abs/2603.08096" class="card-link">arXiv</a>
+            <a href="https://cwru-aism.github.io/triangulang/" class="card-link">GitHub</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="card-tag">Project</span>
+          <h3>Lightweight Sound Recognition</h3>
+          <p>A lightweight sound classification model built in Python. Created for Harvard's CS50P Final Project.</p>
+          <div class="card-links">
+            <a href="https://github.com/aryehrb/Ecouter" class="card-link">GitHub</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="card-tag">Project</span>
+          <h3>Chicken Chow</h3>
+          <p>3D survival/stealth/strategy game made in Unity. Run around as a chicken eating mind- and body-altering foods; try to escape before you're caught!</p>
+          <div class="card-links">
+            <a href="https://ecse-csds290.itch.io/chicken-chow-s2026-team-4" class="card-link">Play</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="card-tag">Creative</span>
+          <h3>Red Mountain Woodworking</h3>
+          <p>Handcrafted woodworking and woodturning pieces. Browse the collection on Etsy.</p>
+          <div class="card-links">
+            <a href="https://www.etsy.com/shop/RedMountainWood" class="card-link">Visit Shop</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PHOTO STRIP
+       Replace each src="..." with your own image paths or URLs.
+       Width/height of each photo is controlled by .photo-item in CSS.
+  ============================================================ -->
+  <div class="photo-strip-section">
+    <div class="photo-strip">
+      <div class="photo-item"><img src="im_badgastein.jpeg" alt="Bad Gastein waterfall"></div>
+      <div class="photo-item"><img src="im_leathershop.jpeg" alt="Hoi An leather shop"></div>
+      <div class="photo-item"><img src="im_bariloche.jpeg" alt="Bariloche skiing day"></div>
+      <div class="photo-item"><img src="im_chile.jpeg" alt="Santiago, Chile statue"></div>
+      <div class="photo-item"><img src="im_hoian.jpeg" alt="Hoi An river tour"></div>
+      <div class="photo-item"><img src="im_curitiba.jpeg" alt="Curitiba, Brasil train ride"></div>
+      <div class="photo-item"><img src="im_morroco.jpeg" alt="Essaouira local restaurant"></div>
+      <div class="photo-item"><img src="im_mendoza.jpeg" alt="Mendoza hike overlook"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       INTERESTS
+       A rotating section you update yourself. The YouTube embed
+       uses an <iframe> — an embedded window to another webpage.
+       To swap the video, replace the ID in the src URL (the part after "?v=")
+       with the ID of any YouTube video.
+  ============================================================ -->
+  <section id="currently">
+    <div class="section-inner">
+      <div class="section-label">Interests</div>
+      <h2>Ve lo que me está gustando</h2>
+      <p class="section-desc">What I'm watching, listening to, or reminiscing about.</p>
+      <div class="currently-grid">
+
+        <!-- VIDEO: replace the ID in the src URL to change the video -->
+        <div class="video-wrap">
+          <iframe
+            src="https://www.youtube.com/embed/15spd-OpYko"
+            title="Currently watching"
+            allowfullscreen>
+          </iframe>
+        </div>
+
+        <!-- GLOBE: drag to rotate. Countries colored by time spent (weeks). -->
+        <!-- Legend is commented out below — uncomment when ready to show it -->
+        <div>
+          <div id="globe-wrap"></div>
+          <!--
+          <div class="globe-legend">
+            <div class="globe-legend-bar"></div>
+            <div class="globe-legend-labels">
+              <span>0.5 wks</span>
+              <span>24 wks</span>
+            </div>
+          </div>
+          -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================
+         LYRICS TICKER
+         Thin scrolling bar, like a bus destination display.
+         TO UPDATE: edit the text between the two · · · separators
+         (keep both copies identical so the loop is seamless),
+         and update ticker-song and ticker-artist.
+    ============================================================ -->
+    <div class="lyrics-ticker">
+
+      <div class="ticker-badge">
+        <span class="ticker-song">Believe in Magic</span>
+        <span class="ticker-artist">Jessie J</span>
+      </div>
+
+      <!-- Play/pause toggle. JS below handles the state switch -->
+      <button class="ticker-toggle" aria-label="Play">&#9654;</button>
+
+      <div class="ticker-wrap">
+        <!-- Text is written twice for a seamless scroll loop — edit both copies -->
+        <div class="ticker-inner">
+          Tapped out, roll my eyes in the morning Tired of the detox, tired of the talking I get up, I show up, day after day Let's make love and listen to Sade, Sade, yeah &nbsp;&nbsp;·&nbsp;&nbsp; It's ours for the taking If I die today, wanna know that I made it Such a waste being jaded See all the little things that fix a broken heart Open your eyes and you'll see what can happen Gotta believe in the magic, yeah &nbsp;&nbsp;·&nbsp;&nbsp; It could be real with the life you imagine If you believe in the magic (if you believe in the magic, yeah) Whoa, whoa, yeah Gotta, gotta, gotta &nbsp;&nbsp;·&nbsp;&nbsp; Gotta believe in the magic Gotta just believe, oh, yeah
+          Tapped out, roll my eyes in the morning Tired of the detox, tired of the talking I get up, I show up, day after day Let's make love and listen to Sade, Sade, yeah &nbsp;&nbsp;·&nbsp;&nbsp; It's ours for the taking If I die today, wanna know that I made it Such a waste being jaded See all the little things that fix a broken heart Open your eyes and you'll see what can happen Gotta believe in the magic, yeah &nbsp;&nbsp;·&nbsp;&nbsp; It could be real with the life you imagine If you believe in the magic (if you believe in the magic, yeah) Whoa, whoa, yeah Gotta, gotta, gotta &nbsp;&nbsp;·&nbsp;&nbsp; Gotta believe in the magic Gotta just believe, oh, yeah  
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- ============================================================
+       FOOTER / CONTACT
+       Your name and university on the left.
+       GitHub, LinkedIn, and Email links on the right.
+       Replace each href="#" with your actual URLs and email.
+  ============================================================ -->
+  <footer id="contact">
+    <div class="section-inner">
+      <div>
+        <div class="footer-name">Aryeh Rothenberg</div>
+        <div class="footer-sub">Case Western Reserve University</div>
+      </div>
+      <div class="contact-links">
+        <!-- Button styled to match the links. JS below handles the copy + "Copied!" feedback -->
+        <button class="email-copy" onclick="copyEmail(this)">ajr276@case.edu</button>
+        <a href="https://github.com/aryehrb" target="_blank">GitHub</a>
+        <a href="https://www.linkedin.com/in/aryeh-rothenberg/" target="_blank">LinkedIn</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  /* ============================================================
+     GLOBE WIDGET
+     Renders a draggable orthographic globe with countries colored
+     by time spent. Uses D3.js for projection/rendering/drag and
+     TopoJSON to decode country border geometry.
+  ============================================================ */
+  (function () {
+    const width = 400, height = 400, radius = 194;
+
+    /*
+      Visit data: ISO numeric country code → weeks spent.
+      TO UPDATE: look up a country's numeric code at
+      https://en.wikipedia.org/wiki/ISO_3166-1_numeric
+      then add or edit an entry in this object.
+    */
+    const visits = {
+      840: 24,    // USA
+      276: 2,    // Germany
+      32: 20,    // Argentina
+      40: 3,    // Austria
+      76: 4,    // Brazil
+      56: .5,    // Belgium
+      152: 1,    // Chile
+      170: 1,    // Colombia
+      208: .5,    // Denmark
+      784: 1,    // United Arab Emirates
+      724: 2,    // Spain
+      250: 16,    // France
+      300: 2,    // Greece
+      344: .5,    // Hong Kong
+      348: .5,    // Hungary
+      372: .5,    // Ireland
+      376: 22,    // Israel
+      380: 2,    // Italy
+      392: 1,    // Japan
+      504: 1,    // Morocco
+      484: 10,    // Mexico
+      591: .5,    // Panama
+      600: .5,    // Paraguay
+      528: 1,    // Netherlands
+      630: .5,    // Puerto Rico
+      826: 2,    // United Kingdom
+      203: .5,    // Czechia
+      534: .5,    // Sint Maarten
+      752: .5,    // Sweden
+      756: 1,    // Switzerland
+      158: 1,    // Taiwan
+      858: .5,    // Uruguay
+      336: .5,    // Vatican City
+      704: 2,    // Vietnam
+    };
+
+    /* Color scale: log so short visits still show up visibly; min is light sienna, max is dark bark */
+    const colorScale = d3.scaleSequentialLog()
+      .domain([0.5, 24])
+      .interpolator(d3.interpolateRgb('#c49a6a', '#3d1a05'));
+
+    const unvisitedColor = '#e8ede4'; /* same as card-tag bg — blends into the palette */
+    const oceanColor     = '#8aa898';
+    const borderColor    = '#a8b898';
+
+    /* Orthographic projection = the "looking at a sphere" view */
+    const projection = d3.geoOrthographic()
+      .scale(radius)
+      .translate([width / 2, height / 2])
+      .clipAngle(90)    /* hides the back hemisphere */
+      .rotate([0, -30]); /* initial tilt so it doesn't open flat on the equator */
+
+    const path = d3.geoPath().projection(projection);
+
+    /* Create the SVG canvas inside #globe-wrap */
+    const svg = d3.select('#globe-wrap')
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .style('cursor', 'grab');
+
+    /* Draw the ocean as a filled circle behind the countries */
+    svg.append('circle')
+      .attr('cx', width / 2)
+      .attr('cy', height / 2)
+      .attr('r', radius)
+      .attr('fill', oceanColor);
+
+    /* Fetch country border data, then draw and wire up drag */
+    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+      .then(r => r.json())
+      .then(world => {
+        const countries = topojson.feature(world, world.objects.countries);
+
+        /* Draw one SVG path per country */
+        svg.selectAll('.country')
+          .data(countries.features)
+          .enter()
+          .append('path')
+          .attr('class', 'country')
+          .attr('d', path)
+          .attr('fill', d => {
+            const weeks = visits[+d.id]; /* +d.id converts the string id to a number */
+            return weeks ? colorScale(weeks) : unvisitedColor;
+          })
+          .attr('stroke', borderColor)
+          .attr('stroke-width', 0.6);
+
+        /* Drag to rotate: track mouse delta and update the projection's rotation */
+        let lastPos = null;
+
+        svg.call(d3.drag()
+          .on('start', (event) => {
+            svg.style('cursor', 'grabbing');
+            lastPos = [event.x, event.y];
+          })
+          .on('drag', (event) => {
+            if (!lastPos) return;
+            const dx = event.x - lastPos[0];
+            const dy = event.y - lastPos[1];
+            const [λ, φ] = projection.rotate(); /* λ = longitude rotation, φ = latitude rotation */
+            projection.rotate([λ + dx * 0.4, φ - dy * 0.4]);
+            svg.selectAll('.country').attr('d', path); /* redraw all paths with new rotation */
+            lastPos = [event.x, event.y];
+          })
+          .on('end', () => {
+            svg.style('cursor', 'grab');
+            lastPos = null;
+          })
+        );
+      });
+  })();
+
+    function copyEmail(btn) {
+      navigator.clipboard.writeText('ajr276@case.edu').then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => btn.textContent = original, 800); /* revert after x  milliseconds */
+      });
+    }
+
+    /* Lyrics ticker play/pause toggle */
+    (function () {
+      const ticker = document.querySelector('.ticker-inner');
+      const btn    = document.querySelector('.ticker-toggle');
+      let playing  = false;
+
+      btn.addEventListener('click', () => {
+        playing = !playing;
+        ticker.style.animationPlayState = playing ? 'running' : 'paused';
+        btn.innerHTML = playing ? '&#9646;&#9646;' : '&#9654;'; /* swap between ⏸ and ▶ */
+      });
+    })();
+
+    /* Open all project card links in a new tab */
+    document.querySelectorAll('.card-link').forEach(link => {
+      link.target = '_blank';
+    });
+
+  </script>
 </body>
 </html>

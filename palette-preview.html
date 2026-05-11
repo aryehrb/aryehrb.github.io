@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Palette Preview — Earth Tones</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f0ece4; padding: 40px; }
+    h1 { font-size: 1.1rem; color: #7a6a55; margin-bottom: 32px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+    .palettes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .palette { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .palette-label { padding: 16px 20px 12px; font-size: 0.85rem; font-weight: 600; color: #333; letter-spacing: 0.03em; text-transform: uppercase; }
+    .swatches { display: flex; height: 72px; }
+    .swatch { flex: 1; }
+    .swatch-info { padding: 12px 20px 16px; display: flex; flex-direction: column; gap: 6px; }
+    .swatch-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #555; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
+    .preview-card { margin: 0 20px 20px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; }
+    .preview-hero { padding: 16px; }
+    .preview-hero .name { font-size: 1.3rem; font-weight: 700; }
+    .preview-hero .tagline { font-size: 0.8rem; margin-top: 2px; }
+    .preview-btn { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 5px; font-size: 0.75rem; font-weight: 600; color: white; }
+    .preview-footer { padding: 10px 16px; font-size: 0.75rem; border-top: 1px solid rgba(0,0,0,0.06); }
+  </style>
+</head>
+<body>
+  <h1>Earth Tone Palettes</h1>
+  <div class="palettes">
+
+    <!-- 1: Warm Bark -->
+    <div class="palette">
+      <div class="palette-label">1 — Warm Bark</div>
+      <div class="swatches">
+        <div class="swatch" style="background:#fdf8f2;"></div>
+        <div class="swatch" style="background:#e8d5b7;"></div>
+        <div class="swatch" style="background:#6b4c2a;"></div>
+        <div class="swatch" style="background:#a0522d;"></div>
+        <div class="swatch" style="background:#c8956c;"></div>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-row"><div class="dot" style="background:#fdf8f2; border-color:#ccc;"></div> #fdf8f2 — background (warm cream)</div>
+        <div class="swatch-row"><div class="dot" style="background:#3d2410;"></div> #3d2410 — text (dark bark)</div>
+        <div class="swatch-row"><div class="dot" style="background:#a0522d;"></div> #a0522d — accent (sienna)</div>
+        <div class="swatch-row"><div class="dot" style="background:#e8d5b7;"></div> #e8d5b7 — section bg (parchment)</div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-hero" style="background:#fdf8f2; color:#3d2410;">
+          <div class="name">Aryeh Jacob</div>
+          <div class="tagline" style="color:#a0522d;">Mechanical Engineer · ML Researcher · Explorer</div>
+          <div class="preview-btn" style="background:#a0522d;">View Projects</div>
+        </div>
+        <div class="preview-footer" style="background:#e8d5b7; color:#6b4c2a;">GitHub · LinkedIn · Email</div>
+      </div>
+    </div>
+
+    <!-- 2: Olive Grove -->
+    <div class="palette">
+      <div class="palette-label">2 — Olive Grove</div>
+      <div class="swatches">
+        <div class="swatch" style="background:#f7f5ef;"></div>
+        <div class="swatch" style="background:#d6d0b0;"></div>
+        <div class="swatch" style="background:#3d3d1a;"></div>
+        <div class="swatch" style="background:#6b7c3a;"></div>
+        <div class="swatch" style="background:#a8b56a;"></div>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-row"><div class="dot" style="background:#f7f5ef; border-color:#ccc;"></div> #f7f5ef — background (linen)</div>
+        <div class="swatch-row"><div class="dot" style="background:#2a2a12;"></div> #2a2a12 — text (dark olive)</div>
+        <div class="swatch-row"><div class="dot" style="background:#6b7c3a;"></div> #6b7c3a — accent (olive)</div>
+        <div class="swatch-row"><div class="dot" style="background:#d6d0b0;"></div> #d6d0b0 — section bg (dry grass)</div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-hero" style="background:#f7f5ef; color:#2a2a12;">
+          <div class="name">Aryeh Jacob</div>
+          <div class="tagline" style="color:#6b7c3a;">Mechanical Engineer · ML Researcher · Explorer</div>
+          <div class="preview-btn" style="background:#6b7c3a;">View Projects</div>
+        </div>
+        <div class="preview-footer" style="background:#d6d0b0; color:#4a5228;">GitHub · LinkedIn · Email</div>
+      </div>
+    </div>
+
+    <!-- 3: Golden Clay -->
+    <div class="palette">
+      <div class="palette-label">3 — Golden Clay</div>
+      <div class="swatches">
+        <div class="swatch" style="background:#fdfaf3;"></div>
+        <div class="swatch" style="background:#f0d98a;"></div>
+        <div class="swatch" style="background:#7a5c00;"></div>
+        <div class="swatch" style="background:#c49a1a;"></div>
+        <div class="swatch" style="background:#e8c84a;"></div>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-row"><div class="dot" style="background:#fdfaf3; border-color:#ccc;"></div> #fdfaf3 — background (cream)</div>
+        <div class="swatch-row"><div class="dot" style="background:#3a2c00;"></div> #3a2c00 — text (dark amber)</div>
+        <div class="swatch-row"><div class="dot" style="background:#c49a1a;"></div> #c49a1a — accent (golden)</div>
+        <div class="swatch-row"><div class="dot" style="background:#f0d98a;"></div> #f0d98a — section bg (wheat)</div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-hero" style="background:#fdfaf3; color:#3a2c00;">
+          <div class="name">Aryeh Jacob</div>
+          <div class="tagline" style="color:#c49a1a;">Mechanical Engineer · ML Researcher · Explorer</div>
+          <div class="preview-btn" style="background:#c49a1a;">View Projects</div>
+        </div>
+        <div class="preview-footer" style="background:#f0d98a; color:#7a5c00;">GitHub · LinkedIn · Email</div>
+      </div>
+    </div>
+
+    <!-- 4: Deep Moss -->
+    <div class="palette">
+      <div class="palette-label">4 — Deep Moss</div>
+      <div class="swatches">
+        <div class="swatch" style="background:#f4f6f0;"></div>
+        <div class="swatch" style="background:#c5ccb0;"></div>
+        <div class="swatch" style="background:#2e3d20;"></div>
+        <div class="swatch" style="background:#4a6741;"></div>
+        <div class="swatch" style="background:#8aab7a;"></div>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-row"><div class="dot" style="background:#f4f6f0; border-color:#ccc;"></div> #f4f6f0 — background (sage white)</div>
+        <div class="swatch-row"><div class="dot" style="background:#1e2914;"></div> #1e2914 — text (deep forest)</div>
+        <div class="swatch-row"><div class="dot" style="background:#4a6741;"></div> #4a6741 — accent (moss)</div>
+        <div class="swatch-row"><div class="dot" style="background:#c5ccb0;"></div> #c5ccb0 — section bg (lichen)</div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-hero" style="background:#f4f6f0; color:#1e2914;">
+          <div class="name">Aryeh Jacob</div>
+          <div class="tagline" style="color:#4a6741;">Mechanical Engineer · ML Researcher · Explorer</div>
+          <div class="preview-btn" style="background:#4a6741;">View Projects</div>
+        </div>
+        <div class="preview-footer" style="background:#c5ccb0; color:#2e3d20;">GitHub · LinkedIn · Email</div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
